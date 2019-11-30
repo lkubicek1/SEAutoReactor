@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.87
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SEAutoReactor", "SEAutoReactor\SEAutoReactor.csproj", "{EED01F5C-0408-450F-8DE6-714CE4C010D6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EED01F5C-0408-450F-8DE6-714CE4C010D6}.Debug|x64.ActiveCfg = Debug|x64
+		{EED01F5C-0408-450F-8DE6-714CE4C010D6}.Debug|x64.Build.0 = Debug|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8637D618-705E-460E-8992-D9257C27140E}
+	EndGlobalSection
+EndGlobal

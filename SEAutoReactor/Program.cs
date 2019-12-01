@@ -21,9 +21,6 @@ namespace IngameScript
 {
     internal sealed class Program : MyGridProgram
     {
-        private const string BatteryGroupName = "Javelin Batteries";
-        private const string ReactorName = "Javelin Reactor";
-
 
         public Program()
         {
@@ -42,30 +39,19 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateSource)
         {
-            IMyBlockGroup batteries = GridTerminalSystem.GetBlockGroupWithName(BatteryGroupName);
-            if(batteries == null)
-            {
-                Echo("No batteries found.");
-                return;
-            }
+            List<IMyBatteryBlock> batteries = new List<IMyBatteryBlock>();
+            GridTerminalSystem.GetBlocksOfType(batteries, b => b.CubeGrid == Me.CubeGrid);
 
-            IMyReactor reactor = GridTerminalSystem.GetBlockWithName(ReactorName) as IMyReactor;
+            List<IMyReactor> reactors = new List<IMyReactor>();
+            GridTerminalSystem.GetBlocksOfType(reactors, b => b.CubeGrid == Me.CubeGrid);
 
-            if(reactor == null)
-            {
-                Echo("No reactor found.");
-                return;
-            }
-
-            Echo($"{batteries.Name}: ");
-            List<IMyBatteryBlock> batteryBlocks = new List<IMyBatteryBlock>();
-            batteries.GetBlocksOfType(batteryBlocks);
+            Echo($"Batteries: ");
             double maxPower = 0.0;
             double currentPower = 0.0;
             double maxOutput = 0.0;
             int count = 0;
             bool startReactor = false;
-            foreach (IMyBatteryBlock battery in batteryBlocks.Where(battery => battery.IsFunctional))
+            foreach (IMyBatteryBlock battery in batteries.Where(battery => battery.IsFunctional))
             {
                 maxPower += battery.MaxStoredPower;
                 currentPower += battery.CurrentStoredPower;
@@ -79,48 +65,52 @@ namespace IngameScript
             Echo($"    Stored Power: {Math.Round(percentage * 100, 2)}%");
             Echo($"    Max Output: {Math.Round(maxOutput, 3)} MW");
 
-            if (reactor.IsFunctional)
+            foreach (IMyReactor reactor in reactors)
             {
-                if (startReactor)
+                if (reactor.IsFunctional)
                 {
-                    reactor.Enabled = true;
-                    foreach (IMyBatteryBlock battery in batteryBlocks.Where(battery => battery.IsFunctional))
+                    if (startReactor)
                     {
-                        battery.ChargeMode = ChargeMode.Recharge;
+                        reactor.Enabled = true;
+                        foreach (IMyBatteryBlock battery in batteries.Where(battery => battery.IsFunctional))
+                        {
+                            battery.ChargeMode = ChargeMode.Recharge;
+                        }
                     }
+                    else
+                    {
+                        bool keepReactorRunning = false;
+                        foreach (IMyBatteryBlock battery in batteries.Where(battery => battery.IsFunctional))
+                        {
+                            double localPercentage = Math.Abs(battery.MaxStoredPower) < 0.0 ? 1 : battery.CurrentStoredPower / battery.MaxStoredPower;
+                            if (localPercentage < 0.8)
+                            {
+                                keepReactorRunning = true;
+                            }
+                        }
+
+                        if (!keepReactorRunning)
+                        {
+                            foreach (IMyBatteryBlock battery in batteries.Where(battery => battery.IsFunctional))
+                            {
+                                battery.ChargeMode = ChargeMode.Auto;
+                            }
+                            reactor.Enabled = false;
+                        }
+                    }
+
+                    string status = reactor.Enabled ? "" : "not ";
+                    Echo($"\n{reactor.CustomName} is {status}running\n");
+
                 }
                 else
                 {
-                    bool keepReactorRunning = false;
-                    foreach (IMyBatteryBlock battery in batteryBlocks.Where(battery => battery.IsFunctional))
-                    {
-                        double localPercentage = Math.Abs(battery.MaxStoredPower) < 0.0 ? 1 : battery.CurrentStoredPower / battery.MaxStoredPower;
-                        if (localPercentage < 0.8)
-                        {
-                            keepReactorRunning = true;
-                        }
-                    }
-
-                    if (!keepReactorRunning)
-                    {
-                        foreach (IMyBatteryBlock battery in batteryBlocks.Where(battery => battery.IsFunctional))
-                        {
-                            battery.ChargeMode = ChargeMode.Auto;
-                        }
-                        reactor.Enabled = false;
-                    }
+                    Echo($"{reactor.CustomName} is not functional.");
                 }
-
-                string status = reactor.Enabled ? "" : "not ";
-                Echo($"\nReactor is {status}running\n");
-
-            } else
-            {
-                Echo($"Reactor is not functional.");
             }
 
-            Echo($"{batteries.Name} ({count}):");
-            foreach (IMyBatteryBlock battery in batteryBlocks.Where(battery => battery.IsFunctional))
+            Echo($"Batteries ({count}):");
+            foreach (IMyBatteryBlock battery in batteries.Where(battery => battery.IsFunctional))
             {
                 double localPercentage = Math.Abs(battery.MaxStoredPower) < 0.0 ? 1 : battery.CurrentStoredPower / battery.MaxStoredPower;
                 Echo($"    {battery.CustomName} ({Math.Round(localPercentage * 100, 2)}%)");
